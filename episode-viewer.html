@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wishy's Comics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; background: #f0f8ff; font-family: 'Schoolbell', cursive; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .nav-bar { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .comic-container { box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 10px solid white; border-radius: 10px; max-width: 900px; width: 100%; background: white; }
+        img { width: 100%; height: auto; display: block; }
+        .back-btn { text-decoration: none; color: white; background: #2c3e50; padding: 12px 25px; border-radius: 50px; font-weight: bold; transition: transform 0.2s; }
+        .back-btn:hover { transform: scale(1.05); background: #f1c40f; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-bar">
+        <a href="index.html" class="back-btn">← Back to Playground</a>
+        <h1 id="ep-title">Episode 1</h1>
+    </div>
+
+    <div class="comic-container">
+        <img id="comic-img" src="" alt="Comic Content">
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const epNum = params.get('ep') || "1";
+        
+        document.getElementById('ep-title').innerText = "Episode " + epNum;
+        
+        // Adjust the .jpg to .png if your files use a different format
+        const folder = "comic-template-episodes";
+        const fileName = `episode ${epNum}.png`; 
+        
+        document.getElementById('comic-img').src = `${folder}/${fileName}`;
+        
+        // If image fails to load, show a placeholder
+        document.getElementById('comic-img').onerror = function() {
+            this.src = "https://via.placeholder.com/800x1000?text=Episode+File+Not+Found";
+        };
+    </script>
+</body>
+</html>

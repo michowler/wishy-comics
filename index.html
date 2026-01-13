@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wishy's Comic Playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; overflow: hidden; background: #a2d2ff; font-family: 'Schoolbell', cursive; }
+        #ui-layer {
+            position: absolute;
+            top: 30px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            color: #2c3e50;
+            z-index: 10;
+        }
+        #label {
+            position: absolute;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            display: none;
+            pointer-events: none;
+            border: 3px solid #f1c40f;
+            transform: translate(-50%, -100%);
+            margin-top: -20px;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1>Wishy's Universe</h1>
+        <p>Drag to Rotate • Hover to Explore • Click to Read</p>
+    </div>
+    <div id="label"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xa2d2ff);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        camera.position.set(0, 18, 25);
+        controls.enableDamping = true;
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+        sunLight.position.set(10, 20, 10);
+        scene.add(sunLight);
+
+        // --- THE STAGE ---
+        const ground = new THREE.Mesh(
+            new THREE.CylinderGeometry(15, 15, 0.5, 64),
+            new THREE.MeshStandardMaterial({ color: 0x9edb62 })
+        );
+        ground.position.y = -0.25;
+        scene.add(ground);
+
+        const objects = [];
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const label = document.getElementById('label');
+
+        // --- 3D OBJECT BUILDERS ---
+        function createObject(index) {
+            const group = new THREE.Group();
+            switch(index) {
+                case 0: // Grass Hill
+                    group.add(new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 16, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshStandardMaterial({color: 0x27ae60})));
+                    for(let i=0; i<6; i++) {
+                        const f = new THREE.Mesh(new THREE.CircleGeometry(0.2, 8), new THREE.MeshStandardMaterial({color: 0xff69b4, side: THREE.DoubleSide}));
+                        f.position.set(Math.random()-0.5, 1.2, Math.random()-0.5);
+                        f.rotation.x = Math.PI/2; group.add(f);
+                    }
+                    break;
+                case 1: // Juice Cup
+                    const g = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.6, 2), new THREE.MeshStandardMaterial({color: 0xffffff, transparent: true, opacity: 0.4}));
+                    const j = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.55, 1.6), new THREE.MeshStandardMaterial({color: 0xffa500}));
+                    const s = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.5), new THREE.MeshStandardMaterial({color: 0xff0000}));
+                    s.rotation.z = 0.2; group.add(g, j, s);
+                    break;
+                case 2: // Cloud Bed
+                    const p1 = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshStandardMaterial({color: 0xffffff}));
+                    const p2 = p1.clone(); p2.position.x = 1.2; p2.scale.set(0.7,0.7,0.7);
+                    const p3 = p1.clone(); p3.position.x = -1.2; p3.scale.set(0.7,0.7,0.7);
+                    group.add(p1, p2, p3);
+                    break;
+                case 3: // Roots & Worm
+                    group.add(new THREE.Mesh(new THREE.CylinderGeometry(1, 1.2, 0.5), new THREE.MeshStandardMaterial({color: 0x5d4037})));
+                    const w = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.1, 8, 16, Math.PI), new THREE.MeshStandardMaterial({color: 0xff8a80}));
+                    w.position.y = 0.4; w.rotation.x = Math.PI/2; group.add(w);
+                    break;
+                case 4: // Smiley Flower
+                    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2), new THREE.MeshStandardMaterial({color: 0x2ecc71}));
+                    const h = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshStandardMaterial({color: 0xf1c40f, side: THREE.DoubleSide}));
+                    h.position.y = 1; group.add(st, h);
+                    break;
+                case 5: // B&W Cat
+                    const b = new THREE.Mesh(new THREE.CapsuleGeometry(0.6, 1), new THREE.MeshStandardMaterial({color: 0x000000}));
+                    const hc = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshStandardMaterial({color: 0xffffff}));
+                    hc.position.y = 1.2; group.add(b, hc);
+                    break;
+                case 6: // Star Soup
+                    const bowl = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16, 0, Math.PI*2, Math.PI/2, Math.PI), new THREE.MeshStandardMaterial({color: 0x3498db}));
+                    const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.4), new THREE.MeshStandardMaterial({color: 0xffd700}));
+                    star.position.y = 0.2; group.add(bowl, star);
+                    break;
+                case 7: // Orange Tree
+                    const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.4, 2), new THREE.MeshStandardMaterial({color: 0x795548}));
+                    const lv = new THREE.Mesh(new THREE.SphereGeometry(1.2), new THREE.MeshStandardMaterial({color: 0x2ecc71}));
+                    lv.position.y = 1.8; group.add(tr, lv);
+                    break;
+                case 8: // Smiley Mushroom
+                    const msk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 1.2), new THREE.MeshStandardMaterial({color: 0xffffff}));
+                    const mcp = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshStandardMaterial({color: 0xe74c3c}));
+                    mcp.position.y = 0.6; group.add(msk, mcp);
+                    break;
+            }
+            return group;
+        }
+
+        const objectDefs = ["Grass Hill", "Juice Cup", "Cloud Bed", "Roots & Worm", "Smiley Flower", "B&W Cat", "Star Soup", "Orange Tree", "Smiley Mushroom"];
+
+        for (let i = 0; i < 9; i++) {
+            const angle = (i / 9) * Math.PI * 2;
+            const objGroup = createObject(i);
+            objGroup.position.set(Math.cos(angle) * 10, 0.5, Math.sin(angle) * 10);
+            objGroup.userData = { url: `episode-viewer.html?ep=${i+1}`, name: objectDefs[i], ep: `Episode ${i+1}` };
+            scene.add(objGroup);
+            objects.push(objGroup);
+        }
+
+        // --- INTERACTION ---
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(scene.children, true);
+            if (hits.length > 0) {
+                let t = hits[0].object;
+                while(t.parent && !t.userData.name) t = t.parent;
+                if(t.userData.name) {
+                    label.style.display = 'block';
+                    label.style.left = e.clientX + 'px';
+                    label.style.top = e.clientY + 'px';
+                    label.innerHTML = `<strong>${t.userData.ep}</strong><br>${t.userData.name}`;
+                    document.body.style.cursor = 'pointer';
+                    return;
+                }
+            }
+            label.style.display = 'none';
+            document.body.style.cursor = 'default';
+        });
+
+        window.addEventListener('click', () => {
+            raycaster.setFromCamera(mouse, camera);
+            const hits = raycaster.intersectObjects(scene.children, true);
+            if (hits.length > 0) {
+                let t = hits[0].object;
+                while(t.parent && !t.userData.url) t = t.parent;
+                if(t.userData.url) window.location.href = t.userData.url;
+            }
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            objects.forEach((obj, i) => {
+                obj.position.y = 0.5 + Math.sin(Date.now() * 0.002 + i) * 0.3;
+                obj.rotation.y += 0.005;
+            });
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
