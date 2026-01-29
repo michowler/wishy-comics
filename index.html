@@ -127,7 +127,7 @@
                     placeholder.userData = group.userData;
                     group.add(placeholder);
                     
-                    loader.load('./Project.glb', (gltf) => {
+                    loader.load('./cloudbed.glb', (gltf) => {
                         group.remove(placeholder);
                         const model = gltf.scene;
                         
@@ -245,7 +245,7 @@
                 }
             }
         });
-        
+
 
         function animate() {
             requestAnimationFrame(animate);
