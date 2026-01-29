@@ -26,21 +26,28 @@
     </div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const epNum = params.get('ep') || "1";
-        
-        document.getElementById('ep-title').innerText = "Episode " + epNum;
-        
-        // Adjust the .jpg to .png if your files use a different format
-        const folder = "comic-template-episodes";
-        const fileName = `episode ${epNum}.png`; 
-        
-        document.getElementById('comic-img').src = `${folder}/${fileName}`;
-        
-        // If image fails to load, show a placeholder
-        document.getElementById('comic-img').onerror = function() {
-            this.src = "https://via.placeholder.com/800x1000?text=Episode+File+Not+Found";
-        };
+            const params = new URLSearchParams(window.location.search);
+            const epNum = params.get('ep') || "1";
+            
+            // Validate episode number (1-9)
+            const episodeNum = Math.max(1, Math.min(9, parseInt(epNum) || 1));
+            
+            document.getElementById('ep-title').innerText = "Episode " + episodeNum;
+            
+            const folder = "comic-template-episodes";
+            const fileName = `episode ${episodeNum}.png`; 
+            const imagePath = `${folder}/${fileName}`;
+            
+            document.getElementById('comic-img').src = imagePath;
+            
+            // If image fails to load, show a placeholder
+            document.getElementById('comic-img').onerror = function() {
+                console.error(`Failed to load image: ${imagePath}`);
+                this.src = "https://via.placeholder.com/800x1000?text=Episode+File+Not+Found";
+            };
+            
+            // Log for debugging
+            console.log(`Loading episode ${episodeNum} from ${imagePath}`);
     </script>
 </body>
 </html>
